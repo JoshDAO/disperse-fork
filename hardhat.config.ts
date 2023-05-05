@@ -1,6 +1,8 @@
 import { HardhatUserConfig } from 'hardhat/config'
 import { Wallet } from '@ethersproject/wallet'
 import '@nomicfoundation/hardhat-toolbox'
+import dotenv from 'dotenv'
+dotenv.config()
 const bip39 = require('bip39')
 const mnemonic = process.env.TEST_MNEMONIC || bip39.generateMnemonic()
 
