@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.14;
-import "hardhat/console.sol";
 import "./IERC20.sol";
 
 contract Disperse {
