@@ -28,7 +28,8 @@ const config: HardhatUserConfig = {
 	networks: {
 		hardhat: {
 			forking: {
-				url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY}`
+				url: `https://arb-goerli.g.alchemy.com/v2/${process.env.ALCHEMY}`,
+				blockNumber: 18945970
 			}
 		},
 		arbitrumGoerli: {
