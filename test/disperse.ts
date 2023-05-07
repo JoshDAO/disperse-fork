@@ -5,6 +5,8 @@ import { ethers, network } from 'hardhat'
 import dotenv from 'dotenv'
 import { Disperse, IERC20 } from '../typechain-types'
 import { Signer } from 'ethers'
+import fs from 'fs'
+import path from 'path'
 dotenv.config()
 const bip39 = require('bip39')
 
@@ -12,7 +14,11 @@ let disperse: Disperse
 let usdc: IERC20
 let sender: Signer
 const usdcAddress = '0x408c5755b5c7a0a28D851558eA3636CfC5b5b19d'
-const addresses: string[] = []
+const addresses: string[] = fs
+	.readFileSync(path.resolve(__dirname, '../addresses.txt'), 'utf-8')
+	.split(',')
+
+console.log(addresses)
 for (let i = 0; i < 10; i++) {
 	const wallet = ethers.Wallet.fromMnemonic(bip39.generateMnemonic(), "m/44'/60'/0'/0/" + i)
 	addresses.push(wallet.address)
@@ -40,7 +46,6 @@ describe('Disperse', async () => {
 			usdc = await ethers.getContractAt('IERC20', usdcAddress)
 			const disperseFactory = await ethers.getContractFactory('Disperse')
 			disperse = await disperseFactory.deploy()
-			const address = disperse.address
 			expect(disperse).to.haveOwnProperty('disperseToken')
 		})
 	})
@@ -50,13 +55,23 @@ describe('Disperse', async () => {
 			const senderAddress = await sender.getAddress()
 			const senderBalance = await usdc.connect(sender).balanceOf(senderAddress)
 			const values = new Array(addresses.length).fill(ethers.utils.parseUnits('100', 6))
-			await usdc.connect(sender).approve(disperse.address, ethers.utils.parseUnits('1000000', 6))
+			await usdc
+				.connect(sender)
+				.approve(disperse.address, ethers.utils.parseUnits('10000000000', 6))
 			const allowance = await usdc.allowance(sender.address, disperse.address)
+			const balanceBefore = await ethers.provider.getBalance(senderAddress)
+			for (let i = 0; i < addresses.length; i += 500) {
+				await disperse
+					.connect(sender)
+					.disperseTokenSimple(usdcAddress, addresses.slice(i, i + 500), values.slice(i, i + 500))
+			}
+			const balanceAfter = await ethers.provider.getBalance(senderAddress)
 
-			await disperse.connect(sender).disperseToken(usdcAddress, addresses, values)
 			for (let i = 0; i < addresses.length; i++) {
 				expect(await usdc.balanceOf(addresses[i])).to.eq(ethers.utils.parseUnits('100', 6))
 			}
+			const cost = ethers.utils.formatEther(balanceBefore.sub(balanceAfter))
+			console.log(cost)
 		})
 	})
 })
